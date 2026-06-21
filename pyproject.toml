@@ -4,4 +4,6 @@ version = "0.1.0"
 description = "LR to classfiy fake-news"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "scikit-learn>=1.9.0",
+]
