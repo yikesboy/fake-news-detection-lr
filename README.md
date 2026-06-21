@@ -1,1 +1,1 @@
-# fake-news-detection-lr
+# fake-news-detection-logistic-regression
