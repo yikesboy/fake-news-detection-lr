@@ -1,7 +1,7 @@
 [project]
 name = "fake-news-detection-lr"
 version = "0.1.0"
-description = "Add your description here"
+description = "LR to classfiy fake-news"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = []
