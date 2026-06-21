@@ -5,5 +5,6 @@ description = "LR to classfiy fake-news"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "pydantic>=2.13.4",
     "scikit-learn>=1.9.0",
 ]
