@@ -7,15 +7,18 @@ from openpyxl import load_workbook
 from pydantic import BaseModel, field_validator
 
 RAW_DIR = Path("data/raw")
-OUTPUT_PATH = Path("data/processed/news.jsonl")
-FILES_OF_INTEREST = ["Fake.xlsx", "Real.xlsx"]
-SHEET_OF_INTEREST = "Sheet1"
+PROCESSED_DIR = Path("data/processed")
+FILES_OF_INTEREST = {
+    "80.xlsx": PROCESSED_DIR / "train.jsonl",
+    "20.xlsx": PROCESSED_DIR / "test.jsonl",
+}
+SHEET_OF_INTEREST = "data"
 
 
 class NewsRow(BaseModel):
     gathering_date: date | None
     news_date: date | None
-    url: str
+    url: str | None
     domain: str | None
     language: str
     keywords: list[str]
@@ -82,17 +85,23 @@ def main() -> None:
         missing = ", ".join(str(path) for path in missing_paths)
         raise SystemExit(f"Missing input files: {missing}")
 
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
-    count = 0
+    total_count = 0
 
-    with OUTPUT_PATH.open("w", encoding="utf-8") as output:
-        for path in paths:
+    for filename, output_path in FILES_OF_INTEREST.items():
+        count = 0
+        path = RAW_DIR / filename
+
+        with output_path.open("w", encoding="utf-8") as output:
             for row in read_rows(path):
                 output.write(row.model_dump_json() + "\n")
                 count += 1
+                total_count += 1
 
-    print(f"Wrote {count} rows to {OUTPUT_PATH}")
+        print(f"Wrote {count} rows to {output_path}")
+
+    print(f"Wrote {total_count} rows total")
 
 
 if __name__ == "__main__":
