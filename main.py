@@ -1,14 +1,15 @@
-from typing import Tuple, Final
+from typing import Final, Tuple
 
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
 
-DATASET_FILE_PATH = "data/processed/news.jsonl"
+TRAIN_SPLIT_DATASET_FILE_PATH = "data/processed/train.jsonl"
+TEST_SPLIT_DATASET_FILE_PATH = "data/processed/test.jsonl"
 
 NGRAM_RANGE_TRANSLATED_ARTICLE: Tuple[int, int] = (1,2)
 NGRAM_RANGE_ORIGINAL_ARTICLE: Tuple[int, int] = (3,5)
@@ -29,30 +30,34 @@ FEATURE_COLUMNS = [
 REQUIRED_COLS = [LABEL_COL, *FEATURE_COLUMNS]
 
 
-df = pd.read_json(DATASET_FILE_PATH, lines=True)
+train_df = pd.read_json(TRAIN_SPLIT_DATASET_FILE_PATH, lines=True)
+test_df = pd.read_json(TEST_SPLIT_DATASET_FILE_PATH, lines=True)
 
-#print(df.shape)
-#print(df.columns.tolist())
-#print(df.head())
+#print(train_df.shape)
+#print(train_df.columns.tolist())
+#print(train_df.head())
 
-df[REQUIRED_COLS] = df[REQUIRED_COLS].replace(
-    r"^\s*$",
-    pd.NA,
-    regex=True,
-)
+for df in (train_df, test_df):
+    df[REQUIRED_COLS] = df[REQUIRED_COLS].replace(
+        r"^\s*$",
+        pd.NA,
+        regex=True,
+    )
 
 label_mapping = {
     "real": 0,
     "fake": 1,
 }
 
-df[LABEL_COL] = (
-    df[LABEL_COL]
-    .astype(str)
-    .map(label_mapping)
-)
+for df in (train_df, test_df):
+    df[LABEL_COL] = (
+        df[LABEL_COL]
+        .astype(str)
+        .map(label_mapping)
+    )
 
-df = df.dropna(subset=REQUIRED_COLS).reset_index(drop=True)
+train_df = train_df.dropna(subset=REQUIRED_COLS).reset_index(drop=True)
+test_df = test_df.dropna(subset=REQUIRED_COLS).reset_index(drop=True)
 
 pipeline = Pipeline([
     ("features", ColumnTransformer(
@@ -91,16 +96,12 @@ pipeline = Pipeline([
     ("classifier", LogisticRegression(max_iter=2000))
 ])
 
-X = df[FEATURE_COLUMNS]
-y = df[LABEL_COL]
+X_train_full = train_df[FEATURE_COLUMNS]
+y_train_full = train_df[LABEL_COL]
+X_test = test_df[FEATURE_COLUMNS]
+y_test = test_df[LABEL_COL]
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X,
-    y,
-    test_size=0.2,
-    stratify=y,
-    random_state=42
-)
+X_train, X_validation, y_train, y_validation = train_test_split( X_train_full, y_train_full, test_size=0.2, stratify=y_train_full, random_state=42)
 
 pipeline.fit(X_train, y_train)
 
